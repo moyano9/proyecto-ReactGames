@@ -1,55 +1,71 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import GameCard from '../components/GameCard';
 import SearchBar from '../components/SearchBar';
+import Pagination from '../components/Pagination';
 import { getAllGames, searchGames } from '../services/api';
 
 export default function Games() {
+  // Obtener y establecer parámetros de búsqueda de la URL
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Obtener parámetros de la URL
+  const pageFromUrl = parseInt(searchParams.get('page')) || 1;
+  const searchFromUrl = searchParams.get('q') || '';
+  
+  // Estado del componente
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const [searching, setSearching] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searching, setSearching] = useState(searchFromUrl !== '');
+  const [searchInput, setSearchInput] = useState(searchFromUrl);
+  const [resetButtonHovered, setResetButtonHovered] = useState(false);
 
+  // Fetch inicial y cuando cambia la URL
   useEffect(() => {
+    const currentPage = pageFromUrl;
+    const currentSearch = searchFromUrl;
+    
+    const fetchGames = async () => {
+      setLoading(true);
+      let data;
+      
+      if (currentSearch) {
+        data = await searchGames(currentSearch, currentPage);
+        setSearching(true);
+      } else {
+        data = await getAllGames(currentPage);
+        setSearching(false);
+      }
+      
+      setGames(data.results);
+      setTotalCount(data.count);
+      setLoading(false);
+    };
+    
     fetchGames();
-  }, [page]);
+  }, [pageFromUrl, searchFromUrl]);
 
-  const fetchGames = async () => {
-    setLoading(true);
-    if (searching && searchQuery) {
-      const data = await searchGames(searchQuery, page);
-      setGames(data.results);
-      setTotalCount(data.count);
-    } else {
-      const data = await getAllGames(page);
-      setGames(data.results);
-      setTotalCount(data.count);
+  const handleSearch = (query) => {
+    if (query.trim()) {
+      setSearchInput(query);
+      setSearchParams({ q: query, page: '1' });
     }
-    setLoading(false);
-  };
-
-  const handleSearch = async (query) => {
-    setSearchQuery(query);
-    setSearching(true);
-    setPage(1);
-    setLoading(true);
-    const data = await searchGames(query, 1);
-    setGames(data.results);
-    setTotalCount(data.count);
-    setLoading(false);
   };
 
   const handleResetSearch = () => {
     setSearching(false);
-    setSearchQuery('');
-    setPage(1);
-    fetchGames();
+    setSearchInput('');
+    setSearchParams({});
   };
 
   const handlePageChange = (newPage) => {
     if (newPage > 0) {
-      setPage(newPage);
+      if (searching && searchFromUrl) {
+        setSearchParams({ q: searchFromUrl, page: newPage.toString() });
+      } else {
+        setSearchParams({ page: newPage.toString() });
+      }
       window.scrollTo(0, 0);
     }
   };
@@ -114,43 +130,13 @@ export default function Games() {
       gridAutoRows: '1fr',
       minHeight: '300px',
     },
-    paginationContainer: {
-      display: 'flex',
-      justifyContent: 'center',
-      gap: '1rem',
-      alignItems: 'center',
-    },
-    paginationButton: {
-      backgroundColor: '#7c3aed',
-      color: '#ffffff',
-      padding: '0.5rem 1rem',
-      borderRadius: '0.5rem',
-      border: 'none',
-      cursor: 'pointer',
-      transition: 'background-color 0.3s',
-    },
-    paginationButtonDisabled: {
-      backgroundColor: '#4b5563',
-      cursor: 'not-allowed',
-    },
-    paginationButtonHover: {
-      backgroundColor: '#6d28d9',
-    },
-    paginationText: {
-      color: '#ffffff',
-      fontWeight: 'bold',
-    },
   };
-
-  const [resetButtonHovered, setResetButtonHovered] = useState(false);
-  const [nextButtonHovered, setNextButtonHovered] = useState(false);
-  const [prevButtonHovered, setPrevButtonHovered] = useState(false);
 
   return (
     <div style={styles.page}>
       <div style={styles.container}>
         <h1 style={styles.title}>
-          {searching ? `Resultados para: "${searchQuery}"` : 'Todos los Videojuegos'}
+          {searching ? `Resultados para: "${searchInput}"` : 'Todos los Videojuegos'}
         </h1>
 
         <SearchBar onSearch={handleSearch} />
@@ -185,40 +171,15 @@ export default function Games() {
               ))}
             </div>
 
-            {/* Paginación */}
-            <div style={styles.paginationContainer}>
-              <button
-                onClick={() => handlePageChange(page - 1)}
-                disabled={page === 1}
-                style={{
-                  ...styles.paginationButton,
-                  ...(page === 1 && styles.paginationButtonDisabled),
-                  ...(prevButtonHovered && page !== 1 && styles.paginationButtonHover),
-                }}
-                onMouseEnter={() => setPrevButtonHovered(true)}
-                onMouseLeave={() => setPrevButtonHovered(false)}
-              >
-                ← Anterior
-              </button>
-
-              <span style={styles.paginationText}>
-                Página {page} de {totalPages}
-              </span>
-
-              <button
-                onClick={() => handlePageChange(page + 1)}
-                disabled={page === totalPages}
-                style={{
-                  ...styles.paginationButton,
-                  ...(page === totalPages && styles.paginationButtonDisabled),
-                  ...(nextButtonHovered && page !== totalPages && styles.paginationButtonHover),
-                }}
-                onMouseEnter={() => setNextButtonHovered(true)}
-                onMouseLeave={() => setNextButtonHovered(false)}
-              >
-                Siguiente →
-              </button>
-            </div>
+            {/* Paginación con el componente reutilizable */}
+            {totalPages > 1 && (
+              <Pagination
+                currentPage={pageFromUrl}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                loading={loading}
+              />
+            )}
           </>
         )}
       </div>

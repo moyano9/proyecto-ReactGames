@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getGameDetails } from '../services/api';
 import { useFavorites } from '../hooks/useFavorites';
 
@@ -20,6 +20,9 @@ export default function GameDetail() {
   // Estados para efectos hover
   const [favoriteHovered, setFavoriteHovered] = useState(false);
   const [backButtonHovered, setBackButtonHovered] = useState(false);
+  const [hoveredGenre, setHoveredGenre] = useState(null);
+  const [hoveredTag, setHoveredTag] = useState(null);
+  const [hoveredPublisher, setHoveredPublisher] = useState(false);
 
   // Cargar los detalles del juego cuando se monta el componente
   useEffect(() => {
@@ -153,6 +156,41 @@ export default function GameDetail() {
       borderRadius: '9999px',
       fontSize: '0.875rem',
     },
+    tag: {
+      backgroundColor: '#059669',
+      color: '#ffffff',
+      padding: '0.375rem 0.75rem',
+      borderRadius: '9999px',
+      fontSize: '0.875rem',
+      cursor: 'pointer',
+      transition: 'background-color 0.3s',
+    },
+    tagHover: {
+      backgroundColor: '#047857',
+    },
+    publisherLink: {
+      color: '#a78bfa',
+      cursor: 'pointer',
+      textDecoration: 'none',
+      borderBottom: '2px solid #a78bfa',
+      transition: 'color 0.3s',
+    },
+    publisherLinkHover: {
+      color: '#c4b5fd',
+    },
+    genreButton: {
+      backgroundColor: '#7c3aed',
+      color: '#ffffff',
+      padding: '0.375rem 0.75rem',
+      borderRadius: '9999px',
+      fontSize: '0.875rem',
+      border: 'none',
+      cursor: 'pointer',
+      transition: 'background-color 0.3s',
+    },
+    genreButtonHover: {
+      backgroundColor: '#6d28d9',
+    },
     description: {
       marginBottom: '2rem',
     },
@@ -274,18 +312,56 @@ export default function GameDetail() {
                   <h3 style={styles.sectionTitle}>👨‍💼 Desarrollador</h3>
                   <p style={styles.text}>{game.developers?.[0]?.name || 'Desconocido'}</p>
                 </div>
+
+                {/* Publisher */}
+                {game.publishers && game.publishers.length > 0 && (
+                  <div style={styles.section}>
+                    <h3 style={styles.sectionTitle}>🏢 Publisher</h3>
+                    <div style={styles.genresList}>
+                      {game.publishers.map((publisher) => (
+                        <button
+                          key={publisher.id}
+                          onClick={() => navigate(`/publisher/${publisher.id}`)}
+                          style={{
+                            ...styles.publisherLink,
+                            ...(hoveredPublisher === publisher.id && styles.publisherLinkHover),
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            padding: '0',
+                            fontSize: '1rem',
+                          }}
+                          onMouseEnter={() => setHoveredPublisher(publisher.id)}
+                          onMouseLeave={() => setHoveredPublisher(false)}
+                          title={`Ver más juegos de ${publisher.name}`}
+                        >
+                          {publisher.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Columna derecha */}
               <div>
-                {/* Géneros */}
+              {/* Géneros */}
                 <div style={styles.section}>
                   <h3 style={styles.sectionTitle}>🎮 Géneros</h3>
                   <div style={styles.genresList}>
                     {game.genres?.map((genre) => (
-                      <span key={genre.id} style={styles.genre}>
+                      <button
+                        key={genre.id}
+                        onClick={() => navigate(`/tag/${genre.id}`)}
+                        style={{
+                          ...styles.genreButton,
+                          ...(hoveredGenre === genre.id && styles.genreButtonHover),
+                        }}
+                        onMouseEnter={() => setHoveredGenre(genre.id)}
+                        onMouseLeave={() => setHoveredGenre(null)}
+                        title={`Ver más juegos de ${genre.name}`}
+                      >
                         {genre.name}
-                      </span>
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -301,6 +377,30 @@ export default function GameDetail() {
                     ))}
                   </div>
                 </div>
+
+                {/* Tags */}
+                {game.tags && game.tags.length > 0 && (
+                  <div style={styles.section}>
+                    <h3 style={styles.sectionTitle}>🏷️ Tags</h3>
+                    <div style={styles.genresList}>
+                      {game.tags.slice(0, 8).map((tag) => (
+                        <button
+                          key={tag.id}
+                          onClick={() => navigate(`/tag/${tag.id}`)}
+                          style={{
+                            ...styles.tag,
+                            ...(hoveredTag === tag.id && styles.tagHover),
+                          }}
+                          onMouseEnter={() => setHoveredTag(tag.id)}
+                          onMouseLeave={() => setHoveredTag(null)}
+                          title={`Ver más juegos con tag ${tag.name}`}
+                        >
+                          {tag.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

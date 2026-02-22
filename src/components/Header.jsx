@@ -114,6 +114,9 @@ export default function Header() {
           {/* Link a la página de juegos */}
           <NavLink to="/games" label="Juegos" />
 
+          {/* Link a la página de publishers */}
+          <NavLink to="/publishers" label="Publishers" />
+
           {/* Link a favoritos con contador */}
           <Link 
             to="/favorites" 

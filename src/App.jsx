@@ -5,6 +5,9 @@ import Home from './pages/Home';
 import Games from './pages/Games';
 import GameDetail from './pages/GameDetail';
 import Favorites from './pages/Favorites';
+import TagGames from './pages/TagGames';
+import PublisherDetail from './pages/PublisherDetail';
+import Publishers from './pages/Publishers';
 
 function App() {
   const styles = {
@@ -28,6 +31,9 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/games" element={<Games />} />
             <Route path="/game/:id" element={<GameDetail />} />
+            <Route path="/tag/:tagId" element={<TagGames />} />
+            <Route path="/publisher/:publisherId" element={<PublisherDetail />} />
+            <Route path="/publishers" element={<Publishers />} />
             <Route path="/favorites" element={<Favorites />} />
           </Routes>
         </main>
