@@ -1,61 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import GameCard from '../components/GameCard';
 import SearchBar from '../components/SearchBar';
 import Pagination from '../components/Pagination';
-import { getAllGames, searchGames } from '../services/api';
+import { fetchAllGames, searchGamesThunk } from '../redux/slices/gamesSlice';
 
 export default function Games() {
-  // Obtener y establecer parámetros de búsqueda de la URL
+  const dispatch = useDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
   
   // Obtener parámetros de la URL
   const pageFromUrl = parseInt(searchParams.get('page')) || 1;
   const searchFromUrl = searchParams.get('q') || '';
   
-  // Estado del componente
-  const [games, setGames] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [totalCount, setTotalCount] = useState(0);
-  const [searching, setSearching] = useState(searchFromUrl !== '');
-  const [searchInput, setSearchInput] = useState(searchFromUrl);
+  // Obtener estado de Redux
+  const { allGames, loading, currentSearchQuery } = useSelector((state) => state.games);
+  const totalCount = useSelector((state) => state.games.allGames.length); // Nota: esto es aproximado
+  
+  // Estado local
   const [resetButtonHovered, setResetButtonHovered] = useState(false);
+  const [searching, setSearching] = useState(searchFromUrl !== '');
 
   // Fetch inicial y cuando cambia la URL
   useEffect(() => {
     const currentPage = pageFromUrl;
     const currentSearch = searchFromUrl;
     
-    const fetchGames = async () => {
-      setLoading(true);
-      let data;
-      
-      if (currentSearch) {
-        data = await searchGames(currentSearch, currentPage);
-        setSearching(true);
-      } else {
-        data = await getAllGames(currentPage);
-        setSearching(false);
-      }
-      
-      setGames(data.results);
-      setTotalCount(data.count);
-      setLoading(false);
-    };
-    
-    fetchGames();
-  }, [pageFromUrl, searchFromUrl]);
+    if (currentSearch) {
+      dispatch(searchGamesThunk({ query: currentSearch, page: currentPage }));
+      setSearching(true);
+    } else {
+      dispatch(fetchAllGames(currentPage));
+      setSearching(false);
+    }
+  }, [pageFromUrl, searchFromUrl, dispatch]);
 
   const handleSearch = (query) => {
     if (query.trim()) {
-      setSearchInput(query);
       setSearchParams({ q: query, page: '1' });
     }
   };
 
   const handleResetSearch = () => {
     setSearching(false);
-    setSearchInput('');
     setSearchParams({});
   };
 
@@ -70,7 +58,8 @@ export default function Games() {
     }
   };
 
-  const totalPages = Math.ceil(totalCount / 20);
+  // Aproximar total de páginas (RAWG retorna data.count pero solo cargamos 20 por página)
+  const totalPages = searching ? Math.ceil(100 / 20) : Math.ceil(totalCount / 20) || 1;
 
   const styles = {
     page: {
@@ -136,7 +125,7 @@ export default function Games() {
     <div style={styles.page}>
       <div style={styles.container}>
         <h1 style={styles.title}>
-          {searching ? `Resultados para: "${searchInput}"` : 'Todos los Videojuegos'}
+          {searching ? `Resultados para: "${searchFromUrl}"` : 'Todos los Videojuegos'}
         </h1>
 
         <SearchBar onSearch={handleSearch} />
@@ -159,14 +148,14 @@ export default function Games() {
           <div style={styles.loadingContainer}>
             <div style={styles.loadingText}>Cargando juegos...</div>
           </div>
-        ) : games.length === 0 ? (
+        ) : allGames.length === 0 ? (
           <div style={styles.noResultsContainer}>
             <div style={styles.noResultsText}>No se encontraron juegos</div>
           </div>
         ) : (
           <>
             <div style={styles.gamesGrid}>
-              {games.map((game) => (
+              {allGames.map((game) => (
                 <GameCard key={game.id} game={game} />
               ))}
             </div>

@@ -1,30 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
 /**
  * Header - Barra de navegación del sitio
  * Muestra el logo y links a las diferentes páginas
- * También muestra el contador de favoritos
+ * También muestra el contador de favoritos y menú de usuario
  */
 export default function Header() {
-  // Contador de juegos en favoritos
-  const [favorites, setFavorites] = useState(0);
-
-  // Actualizar el contador de favoritos cuando cambien
-  useEffect(() => {
-    const updateFavoriteCount = () => {
-      const fav = JSON.parse(localStorage.getItem('favorites')) || [];
-      setFavorites(fav.length);
-    };
-
-    updateFavoriteCount();
-    
-    // Escuchar cambios en localStorage desde otras pestañas
-    window.addEventListener('storage', updateFavoriteCount);
-    
-    // Limpiar el evento al desmontar el componente
-    return () => window.removeEventListener('storage', updateFavoriteCount);
-  }, []);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  
+  // Obtener cantidad de favoritos de Redux
+  const favorites = useSelector((state) => state.games.favorites);
+  const attendingEvents = useSelector((state) => state.events.attendingEvents);
+  
+  const favoriteCount = favorites.length;
+  const eventCount = attendingEvents.length;
 
   // Estilos del componente
   const styles = {
@@ -96,6 +87,47 @@ export default function Header() {
       fontSize: '0.75rem',
       fontWeight: 'bold',
     },
+    userButton: {
+      backgroundColor: '#6366f1',
+      color: '#ffffff',
+      border: 'none',
+      padding: '0.5rem 1rem',
+      borderRadius: '50%',
+      cursor: 'pointer',
+      fontSize: '1.25rem',
+      transition: 'background-color 0.3s',
+      width: '40px',
+      height: '40px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      position: 'relative',
+    },
+    userMenu: {
+      position: 'absolute',
+      top: '50px',
+      right: 0,
+      backgroundColor: '#111827',
+      border: '1px solid #374151',
+      borderRadius: '0.5rem',
+      minWidth: '200px',
+      boxShadow: '0 10px 25px rgba(0, 0, 0, 0.3)',
+      zIndex: 101,
+    },
+    menuItem: {
+      display: 'block',
+      width: '100%',
+      padding: '0.75rem 1rem',
+      color: '#ffffff',
+      textDecoration: 'none',
+      borderBottom: '1px solid #374151',
+      transition: 'background-color 0.3s',
+      textAlign: 'left',
+      fontSize: '0.875rem',
+    },
+    menuItemHover: {
+      backgroundColor: '#1f2937',
+    },
   };
 
   return (
@@ -114,6 +146,9 @@ export default function Header() {
           {/* Link a la página de juegos */}
           <NavLink to="/games" label="Juegos" />
 
+          {/* Link a la página de eventos */}
+          <NavLink to="/events" label="Eventos" />
+
           {/* Link a la página de publishers */}
           <NavLink to="/publishers" label="Publishers" />
 
@@ -125,8 +160,55 @@ export default function Header() {
             onMouseLeave={(e) => e.target.style.backgroundColor = '#7c3aed'}
           >
             ❤️ Favoritos
-            {favorites > 0 && <span style={styles.badge}>{favorites}</span>}
+            {favoriteCount > 0 && <span style={styles.badge}>{favoriteCount}</span>}
           </Link>
+
+          {/* Botón de usuario con menú desplegable */}
+          <div style={{ position: 'relative' }}>
+            <button
+              style={styles.userButton}
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#4f46e5'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#6366f1'}
+              title="Menú de usuario"
+            >
+              👤
+            </button>
+
+            {showUserMenu && (
+              <div style={styles.userMenu}>
+                <Link
+                  to="/favorites"
+                  style={styles.menuItem}
+                  onMouseEnter={(e) => Object.assign(e.target.style, styles.menuItemHover)}
+                  onMouseLeave={(e) => Object.assign(e.target.style, { backgroundColor: 'transparent' })}
+                  onClick={() => setShowUserMenu(false)}
+                >
+                  ❤️ Mis Favoritos ({favoriteCount})
+                </Link>
+                <Link
+                  to="/my-events"
+                  style={styles.menuItem}
+                  onMouseEnter={(e) => Object.assign(e.target.style, styles.menuItemHover)}
+                  onMouseLeave={(e) => Object.assign(e.target.style, { backgroundColor: 'transparent' })}
+                  onClick={() => setShowUserMenu(false)}
+                >
+                  📅 Mis Eventos ({eventCount})
+                </Link>
+                <button
+                  style={{...styles.menuItem, color: '#ef4444'}}
+                  onMouseEnter={(e) => Object.assign(e.target.style, styles.menuItemHover)}
+                  onMouseLeave={(e) => Object.assign(e.target.style, { backgroundColor: 'transparent' })}
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    // Aquí iría la lógica de logout si existe
+                  }}
+                >
+                  🚪 Cerrar sesión
+                </button>
+              </div>
+            )}
+          </div>
         </nav>
       </div>
     </header>

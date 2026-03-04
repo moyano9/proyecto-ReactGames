@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import GameCard from '../components/GameCard';
 import Pagination from '../components/Pagination';
-import { getPublisherDetails, getGamesByPublisher } from '../services/api';
+import { fetchPublisherDetails, fetchGamesByPublisher } from '../redux/slices/gamesSlice';
 
 /**
  * PublisherDetail - Página que muestra los detalles de un publisher y sus juegos
@@ -12,36 +13,31 @@ export default function PublisherDetail() {
   // Obtener el ID del publisher desde la URL
   const { publisherId } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  // Estado del componente
-  const [publisher, setPublisher] = useState(null);
-  const [games, setGames] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Estado del componente desde Redux
+  const { publisherDetails: publisher, gamesByPublisher: games, loading } = useSelector((state) => state.games);
+  
+  // Estado local para paginación
   const [page, setPage] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
+  const totalCount = 100; // Aproximado
+  const totalPages = Math.ceil(totalCount / 20);
 
   // Cargar datos del publisher y sus juegos
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      // Cargar información del publisher
-      const publisherData = await getPublisherDetails(publisherId);
-      setPublisher(publisherData);
+    dispatch(fetchPublisherDetails(publisherId));
+    dispatch(fetchGamesByPublisher({ publisherId, page }));
+  }, [publisherId, dispatch]);
 
-      // Cargar juegos del publisher
-      const gamesData = await getGamesByPublisher(publisherId, page);
-      setGames(gamesData.results);
-      setTotalCount(gamesData.count);
-      setLoading(false);
-    };
-    fetchData();
-  }, [publisherId, page]);
+  // Cuando cambia la página
+  useEffect(() => {
+    dispatch(fetchGamesByPublisher({ publisherId, page }));
+  }, [page, publisherId, dispatch]);
 
   const handlePageChange = (newPage) => {
     setPage(newPage);
+    window.scrollTo(0, 0);
   };
-
-  const totalPages = Math.ceil(totalCount / 20);
 
   // Estilos del componente
   const styles = {

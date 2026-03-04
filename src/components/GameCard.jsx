@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useFavorites } from '../hooks/useFavorites';
+import { useDispatch, useSelector } from 'react-redux';
+import { toggleFavorite } from '../redux/slices/gamesSlice';
 
 /**
  * GameCard - Componente que muestra una tarjeta de un juego
@@ -9,8 +10,9 @@ import { useFavorites } from '../hooks/useFavorites';
  * - game: Objeto con datos del juego (name, background_image, rating, etc)
  */
 export default function GameCard({ game }) {
-  // Usar el hook personalizado para favoritos
-  const { isFavorite, toggleFavorite } = useFavorites(game.id);
+  const dispatch = useDispatch();
+  const favorites = useSelector((state) => state.games.favorites);
+  const isFavorite = favorites.includes(game.id);
   
   // Estado para efectos hover (cambiar apariencia al pasar mouse)
   const [isHovered, setIsHovered] = useState(false);
@@ -23,7 +25,6 @@ export default function GameCard({ game }) {
       borderRadius: '0.5rem',
       overflow: 'hidden',
       cursor: 'pointer',
-      boxShadow: '0 10px 15px rgba(0, 0, 0, 0.3)',
       transition: 'transform 0.3s, box-shadow 0.3s',
       display: 'flex',
       flexDirection: 'column',
@@ -115,7 +116,7 @@ export default function GameCard({ game }) {
   const handleFavoriteClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    toggleFavorite();
+    dispatch(toggleFavorite(game.id));
   };
 
   return (

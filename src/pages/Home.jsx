@@ -1,19 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import GameCarousel from '../components/GameCarousel';
-import { getPopularGames } from '../services/api';
+import { fetchPopularGames } from '../redux/slices/gamesSlice';
 
 export default function Home() {
-  const [games, setGames] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+  const { popularGames, loading } = useSelector((state) => state.games);
 
   useEffect(() => {
-    const fetchGames = async () => {
-      const data = await getPopularGames();
-      setGames(data);
-      setLoading(false);
-    };
-    fetchGames();
-  }, []);
+    dispatch(fetchPopularGames());
+  }, [dispatch]);
 
   const styles = {
     page: {
@@ -144,7 +140,7 @@ export default function Home() {
       </div>
 
       {/* Carrusel de Juegos Populares */}
-      <GameCarousel games={games} />
+      <GameCarousel games={popularGames} />
 
       {/* Sección de Características */}
       <div style={styles.featuresSection}>

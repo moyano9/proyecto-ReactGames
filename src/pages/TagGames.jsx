@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import GameCard from '../components/GameCard';
 import Pagination from '../components/Pagination';
-import { getGamesByTag, getTagDetails } from '../services/api';
+import { fetchGamesByTag, fetchTagDetails } from '../redux/slices/gamesSlice';
 
 /**
  * TagGames - Página que muestra juegos filtrados por tag/género
@@ -12,36 +13,31 @@ export default function TagGames() {
   // Obtener el ID del tag desde la URL
   const { tagId } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  // Estado del componente
-  const [games, setGames] = useState([]);
-  const [tag, setTag] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Estado del componente desde Redux
+  const { gamesByTag, tagDetails, loading } = useSelector((state) => state.games);
+  
+  // Estado local para paginación
   const [page, setPage] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
+  const totalCount = 100; // Aproximado ya que RAWG limita resultados
+  const totalPages = Math.ceil(totalCount / 20);
 
   // Cargar datos del tag y sus juegos
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      // Cargar información del tag
-      const tagData = await getTagDetails(tagId);
-      setTag(tagData);
+    dispatch(fetchTagDetails(tagId));
+    dispatch(fetchGamesByTag({ tagId, page }));
+  }, [tagId, dispatch]);
 
-      // Cargar juegos del tag
-      const gamesData = await getGamesByTag(tagId, page);
-      setGames(gamesData.results);
-      setTotalCount(gamesData.count);
-      setLoading(false);
-    };
-    fetchData();
-  }, [tagId, page]);
+  // Cuando cambia la página
+  useEffect(() => {
+    dispatch(fetchGamesByTag({ tagId, page }));
+  }, [page, tagId, dispatch]);
 
   const handlePageChange = (newPage) => {
     setPage(newPage);
+    window.scrollTo(0, 0);
   };
-
-  const totalPages = Math.ceil(totalCount / 20);
 
   // Estilos del componente
   const styles = {
@@ -117,7 +113,7 @@ export default function TagGames() {
             ← Atrás
           </button>
           <h1 style={styles.title}>
-            {tag ? `Tag: ${tag.name}` : 'Cargando...'}
+            {tagDetails ? `Tag: ${tagDetails.name}` : 'Cargando...'}
           </h1>
         </div>
 
@@ -126,14 +122,14 @@ export default function TagGames() {
           <div style={styles.loadingContainer}>
             <div style={styles.loadingText}>Cargando juegos...</div>
           </div>
-        ) : games.length === 0 ? (
+        ) : gamesByTag.length === 0 ? (
           <div style={styles.noResultsContainer}>
             <div style={styles.noResultsText}>No se encontraron juegos para este tag</div>
           </div>
         ) : (
           <>
             <div style={styles.gamesGrid}>
-              {games.map((game) => (
+              {gamesByTag.map((game) => (
                 <GameCard key={game.id} game={game} />
               ))}
             </div>

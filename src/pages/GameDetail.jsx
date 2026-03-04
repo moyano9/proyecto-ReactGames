@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { getGameDetails } from '../services/api';
-import { useFavorites } from '../hooks/useFavorites';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchGameDetails, toggleFavorite } from '../redux/slices/gamesSlice';
 
 /**
  * GameDetail - Página que muestra los detalles completos de un juego
@@ -11,11 +11,12 @@ export default function GameDetail() {
   // Obtener el ID del juego desde la URL
   const { id } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  // Estado del componente
-  const [game, setGame] = useState(null); // Datos del juego
-  const [loading, setLoading] = useState(true); // Mientras carga
-  const { isFavorite, toggleFavorite } = useFavorites(id); // Hook de favoritos
+  // Estado del componente desde Redux
+  const { currentGame: game, loading } = useSelector((state) => state.games);
+  const favorites = useSelector((state) => state.games.favorites);
+  const isFavorite = favorites.includes(parseInt(id));
 
   // Estados para efectos hover
   const [favoriteHovered, setFavoriteHovered] = useState(false);
@@ -26,13 +27,8 @@ export default function GameDetail() {
 
   // Cargar los detalles del juego cuando se monta el componente
   useEffect(() => {
-    const fetchGame = async () => {
-      const data = await getGameDetails(id);
-      setGame(data);
-      setLoading(false);
-    };
-    fetchGame();
-  }, [id]);
+    dispatch(fetchGameDetails(id));
+  }, [id, dispatch]);
 
   // Estilos del componente (organizados por secciones)
   const styles = {
@@ -274,7 +270,7 @@ export default function GameDetail() {
             <div style={styles.titleSection}>
               <h1 style={styles.title}>{game.name}</h1>
               <button
-                onClick={toggleFavorite}
+                onClick={() => dispatch(toggleFavorite(parseInt(id)))}
                 style={styles.favoriteButton}
                 onMouseEnter={() => setFavoriteHovered(true)}
                 onMouseLeave={() => setFavoriteHovered(false)}

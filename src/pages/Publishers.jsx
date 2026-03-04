@@ -1,40 +1,37 @@
 import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import PublisherCard from '../components/PublisherCard';
 import Pagination from '../components/Pagination';
-import { getPublishers, searchPublishers } from '../services/api';
+import { fetchPublishers, searchPublishersThunk } from '../redux/slices/gamesSlice';
 
 /**
  * Publishers - Página que muestra publishers con búsqueda y paginación
  * Se accede a través de /publishers
  */
 export default function Publishers() {
-  // Estado del componente
-  const [publishers, setPublishers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
+  const dispatch = useDispatch();
+  
+  // Estado del componente desde Redux
+  const { publishers, loading, currentPage } = useSelector((state) => state.games);
+  
+  // Estado local
+  const [page, setPage] = useState(currentPage || 1);
   const [searching, setSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchInputValue, setSearchInputValue] = useState('');
+  
+  // Total aproximado de publishers (RAWG limita resultados)
+  const totalCount = 300;
+  const totalPages = Math.ceil(totalCount / 20);
 
   // Cargar los datos cuando cambia la página o búsqueda
   useEffect(() => {
-    fetchPublishers();
-  }, [page, searching, searchQuery]);
-
-  const fetchPublishers = async () => {
-    setLoading(true);
     if (searching && searchQuery) {
-      const data = await searchPublishers(searchQuery, page);
-      setPublishers(data.results);
-      setTotalCount(data.count);
+      dispatch(searchPublishersThunk({ query: searchQuery, page }));
     } else {
-      const data = await getPublishers(page);
-      setPublishers(data.results);
-      setTotalCount(data.count);
+      dispatch(fetchPublishers(page));
     }
-    setLoading(false);
-  };
+  }, [page, searching, searchQuery, dispatch]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -54,9 +51,8 @@ export default function Publishers() {
 
   const handlePageChange = (newPage) => {
     setPage(newPage);
+    window.scrollTo(0, 0);
   };
-
-  const totalPages = Math.ceil(totalCount / 20);
 
   // Estilos del componente
   const styles = {
