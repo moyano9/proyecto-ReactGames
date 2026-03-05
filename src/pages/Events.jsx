@@ -19,48 +19,55 @@ export default function Events() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center pt-20">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-400">Cargando eventos...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-red-500 text-center">
-          <h2 className="text-2xl font-bold mb-2">Error al cargar eventos</h2>
-          <p>{error}</p>
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center pt-20">
+        <div className="bg-gray-800 p-8 rounded-lg text-center border border-red-600">
+          <p className="text-red-500 text-lg">Error: {error}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 py-8">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Eventos de Videojuegos</h1>
-          <p className="text-gray-400">Descubre los próximos eventos relacionados con videojuegos</p>
-        </div>
-
-        {events.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-400 text-lg">No hay eventos disponibles</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {events.map((event) => (
-              <EventCard
-                key={event.id}
-                event={event}
-                isAttending={attendingEvents.includes(event.id)}
-                onToggleAttend={handleToggleAttend}
-              />
-            ))}
+    <div style={{ minHeight: '100vh', backgroundColor: '#111827', paddingTop: '120px', paddingBottom: '40px' }}>
+      {/* Header */}
+      <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+        <h1 style={{ fontSize: '32px', fontWeight: 'bold', color: 'white', marginBottom: '12px' }}>🎮 Próximos Eventos</h1>
+        <p style={{ color: '#9ca3af', fontSize: '14px', marginBottom: '16px' }}>Descubre y apúntate a los eventos de videojuegos</p>
+        {events.length > 0 && (
+          <div style={{ display: 'inline-block', backgroundColor: '#2563eb', color: 'white', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold' }}>
+            {attendingEvents.length} de {events.length}
           </div>
         )}
       </div>
+
+      {/* Lista de eventos */}
+      {events.length === 0 ? (
+        <div style={{ textAlign: 'center', paddingTop: '48px' }}>
+          <p style={{ color: '#9ca3af' }}>No hay eventos disponibles</p>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '32px', maxWidth: '1280px', margin: '0 auto', padding: '0 24px' }}>
+          {events.map((event) => (
+            <EventCard
+              key={event.id}
+              event={event}
+              isAttending={attendingEvents.includes(event.id)}
+              onToggleAttend={handleToggleAttend}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
